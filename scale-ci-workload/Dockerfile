@@ -20,19 +20,13 @@ RUN mkdir -p $GOPATH/src/github.com/conprof/conprof && \
     cd $GOPATH/src/github.com/conprof/conprof && \
      GO111MODULE=on GOPROXY=https://proxy.golang.org go install -v
 
-# Build the touchstone binary from source in a separate image
-WORKDIR $GOPATH/src/github.com/touchstone
+# Build the touchstone binary
+RUN git clone https://github.com/amitsagtani97/touchstone.git /tmp/touchstone && \
+    cd /tmp/touchstone && git checkout compare_prom_data && python3 setup.py develop
 
-RUN mkdir -p $GOPATH/src/github.com/touchstone && \
-    git clone https://github.com/amitsagtani97/touchstone.git $GOPATH/src/github.com/touchstone && \
-    cd $GOPATH/src/github.com/touchstone && git checkout compare_prom_data && python setup.py develop
-
-# Build the prometheus-api-client binary from source in a separate image
-WORKDIR $GOPATH/src/github.com/prometheus-api-client
-
-RUN mkdir -p $GOPATH/src/github.com/touchstone && \
-    git clone https://github.com/amitsagtani97/prometheus-api-client-python.git $GOPATH/src/github.com/prometheus-api-client && \
-    cd $GOPATH/src/github.com/prometheus-api-client && git checkout update_get_aggreagation && python setup.py develop
+# Build the prometheus-api-client binary
+RUN git clone https://github.com/amitsagtani97/prometheus-api-client-python.git /tmp/prometheus-api-client && \
+    cd /tmp/prometheus-api-client && git checkout update_get_aggreagation && python3 setup.py develop
 
 
 # Origin-tests for oc/openshift-tests
@@ -46,15 +40,6 @@ ENV KUBECONFIG /root/.kube/config
 
 # Copy conprof binary
 COPY --from=scraperbuilder /go/bin/conprof /usr/bin/conprof
-
-# Copy conprof binary
-COPY --from=scraperbuilder  /go/bin/conprof /usr/bin/conprof
-
-# Copy touchstone_compare binary
-COPY --from=scraperbuilder  /go/bin/touchstone_compare /usr/bin/touchstone_compare
-
-# Copy prometheus-api-client binary
-# TODO
 
 # Copy OpenShift CLI, Kubernetes CLI and cluster loader into container
 COPY --from=origintests /usr/bin/oc /usr/bin/oc
