@@ -28,6 +28,15 @@ RUN git clone https://github.com/amitsagtani97/touchstone.git /tmp/touchstone &&
 RUN git clone https://github.com/amitsagtani97/prometheus-api-client-python.git /tmp/prometheus-api-client && \
     cd /tmp/prometheus-api-client && git checkout update_get_aggreagation && python3 setup.py develop
 
+# Build the node-exporter binary
+RUN mkdir /tmp/node_exporter && cd /tmp/node_exporter && \
+    wget https://github.com/prometheus/node_exporter/releases/download/v*/node_exporter-*.*-amd64.tar.gz && \
+    tar xvfz node_exporter-*.*-amd64.tar.gz
+
+# Build the prometheus binary
+RUN mkdir /tmp/prometheus && cd /tmp/prometheus && \
+    wget https://github.com/prometheus/prometheus/releases/download/v*/prometheus-*.*-amd64.tar.gz && \
+    tar xvf prometheus-*.*-amd64.tar.gz
 
 # Origin-tests for oc/openshift-tests
 FROM quay.io/openshift/origin-tests:4.3 as origintests
@@ -40,6 +49,12 @@ ENV KUBECONFIG /root/.kube/config
 
 # Copy conprof binary
 COPY --from=scraperbuilder /go/bin/conprof /usr/bin/conprof
+
+# Copy node_exporter binary
+COPY --from=scraperbuilder  /tmp/node_exporter/node_exporter-*.*-amd64/node_exporter /usr/bin/node_exporter
+
+# Copy prometheus binary
+COPY --from=scraperbuilder /tmp/prometheus/prometheus-*.*/prometheus /usr/bin/prometheus
 
 # Copy OpenShift CLI, Kubernetes CLI and cluster loader into container
 COPY --from=origintests /usr/bin/oc /usr/bin/oc
