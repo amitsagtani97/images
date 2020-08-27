@@ -21,13 +21,10 @@ RUN mkdir -p $GOPATH/src/github.com/conprof/conprof && \
      GO111MODULE=on GOPROXY=https://proxy.golang.org go install -v
 
 FROM python:3
-# Build the prometheus-api-client binary
-RUN git clone https://github.com/amitsagtani97/prometheus-api-client-python.git /tmp/prometheus-api-client && \
-    cd /tmp/prometheus-api-client && git checkout update_get_aggreagation && python setup.py develop
 
 # Build the touchstone binary
 RUN git clone https://github.com/amitsagtani97/touchstone.git /tmp/touchstone && \
-    cd /tmp/touchstone && git checkout test_touchstone && python setup.py develop
+    cd /tmp/touchstone && git checkout compare_prom_data && python setup.py develop
 
 # Origin-tests for oc/openshift-tests
 FROM quay.io/openshift/origin-tests:4.3 as origintests
@@ -60,8 +57,7 @@ RUN yum --enablerepo=centos-sclo-rh install -y python3 python3-requests && \
     pip2.7 install boto3 && \
     yum install -y python-rbd python-flask && \
     git clone https://github.com/cloud-bulldozer/snafu /tmp/snafu && \
-    pip3 install -e /tmp/snafu && \
-    pip3 install --upgrade-strategy=only-if-needed -r https://raw.githubusercontent.com/cloud-bulldozer/snafu/master/requirements.txt && \
+    pip3 install --upgrade-strategy=only-if-needed -e /tmp/snafu && \
     pip3 install gspread gspread-formatting oauth2client && \
     sed -i "s/#Port 22/Port 2022/" /etc/ssh/sshd_config && \
     chmod g=u /etc/passwd && \
